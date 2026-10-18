@@ -36,10 +36,39 @@ export async function POST(req){
   const payload={systemInstruction:{parts:[{text:SYSTEM+(mode==='reflect'?'\nNo browsing is available for this answer; do not claim that current facts were verified.':'\nResearch mode is active: search when current reliable information materially improves the answer. For major factual claims show available source links. If sources are missing, say so.')}]},contents,generationConfig:{temperature:0.65,maxOutputTokens:4096},...(mode==='research'?{tools:[{google_search:{}}]}:{})};
   const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
   try {
-    const model=process.env.GEMINI_MODEL||'gemini-2.5-flash';
-    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':process.env.GEMINI_API_KEY},body:JSON.stringify(payload),signal:controller.signal,cache:'no-store'});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok){console.error('Gemini',r.status,String(d?.error?.message||'').slice(0,200));return NextResponse.json({error:r.status===429?'AI request limit reached. Try again later.':'AI unavailable. Check your API key, model and quota.'},{status:r.status===429?429:502});}
+    // Some newer Gemini API projects no longer have access to 2.5 models.
+    // Only fall back on model-not-found errors; never silently retry auth, quota, or billing errors.
+    const configured=(process.env.GEMINI_MODEL||'gemini-3.8-flash').trim();
+    const candidates=[...new Set([configured,'gemini-3.8-flash','gemini-3.5-flash-lite'])];
+    let d={}, r=null, model=configured;
+    for (let i=0;i<candidates.length;i++) {
+      model=candidates[i];
+      r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-goog-api-key':process.env.GEMINI_API_KEY},
+        body:JSON.stringify(payload),signal:controller.signal,cache:'no-store'
+      });
+      d=await r.json().catch(()=>({}));
+      if(r.ok)break;
+      const details=String(d?.error?.message||'');
+      console.error('Gemini API request failed:',r.status,d?.error?.status||'UNKNOWN','model='+model,details.slice(0,450));
+      const modelUnavailable=r.status===404||(r.status===400&&/model.*(not found|no longer available|does not exist|not supported)/i.test(details));
+      if(modelUnavailable&&i<candidates.length-1)continue;
+      let message='The AI service could not answer right now. Try again shortly.';
+      if(r.status===429||r.status===402||/quota|resource.exhausted|credit balance/i.test(details))
+        message='Gemini API quota or credits are exhausted. The site owner should check Google AI Studio usage and billing.';
+      else if(r.status===403)
+        message='Gemini API access denied (403). Check API key permissions and project access in Google AI Studio.';
+      else if(/api key not valid|invalid api key|api_key_invalid|api key.*expired/i.test(details))
+        message='The Gemini API key is invalid or expired. The site owner should replace GEMINI_API_KEY in Vercel.';
+      else if(modelUnavailable)
+        message='This Gemini model is unavailable (404). In Vercel set GEMINI_MODEL to a model available to your API key.';
+      else if(r.status===400)
+        message='Gemini rejected the request (400). Check the model or request configuration.';
+      else if(r.status===503||r.status>=500)
+        message='Gemini is temporarily unavailable. Try again shortly.';
+      return NextResponse.json({error:message},{status:r.status===429?429:502});
+    }
     const c=d?.candidates?.[0], answer=(c?.content?.parts||[]).map(x=>x.text||'').join('\n').trim();
     if(!answer)return NextResponse.json({error:'The AI returned no answer. Try a different question.'},{status:502});
     const g=c.groundingMetadata||{};

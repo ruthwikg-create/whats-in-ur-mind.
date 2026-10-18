@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requestOpenAI } from './openai.mjs';
 import { requestOpenRouter } from './openrouter.mjs';
+import { normalizeAnswerStyle, getAnswerStylePrompt, styleAnswerResponse } from './answer-style.mjs';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
@@ -12,7 +13,7 @@ const SYSTEM = [
   "Distinguish reliable evidence from your own reasoned opinion. Use Google Search grounding when enabled for up-to-date jobs, exams, courses, market conditions, laws, prices, scientific information and any significant current claim. Prefer primary sources; clearly acknowledge uncertainties.",
   "Never invent citations or assert that web research was done when it wasn't. You must not fabricate numerical estimates, guarantees or human experiences.",
   "For health, financial, legal or other high-stakes situations, convey uncertainty and encourage appropriate professional confirmation. Be precise, compassionate, realistic and helpful.",
-  "Use readable Markdown when helpful but avoid generic overlong lists. Finish with concrete next steps where useful."
+  "Use readable Markdown with informative headings and substantive paragraphs where helpful. Never use long em dash or en dash punctuation. Finish with concrete next steps where useful."
 ].join('\n');
 
 const recent = new Map();
@@ -31,6 +32,8 @@ export async function POST(req){
   const question=typeof body?.message==='string'?body.message.trim():'';
   if(!question||question.length>6000)return NextResponse.json({error:'Please enter a question up to 6,000 characters.'},{status:400});
   const mode=body?.mode==='reflect'?'reflect':'research';
+  const answerStyle=normalizeAnswerStyle(body?.answerStyle);
+  const styledSystem=SYSTEM+'\n\n'+getAnswerStylePrompt(answerStyle);
   const history=Array.isArray(body.history)?body.history.slice(-14):[];
   const contents=history.filter(x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'&&x.content.length<=12000).map(x=>({role:x.role==='assistant'?'model':'user',parts:[{text:x.content}]}));
   contents.push({role:'user',parts:[{text:question}]});
@@ -43,8 +46,8 @@ export async function POST(req){
     if(!process.env.OPENROUTER_API_KEY)return NextResponse.json({error:'OpenRouter setup pending. Set OPENROUTER_API_KEY in Vercel.'},{status:503});
     const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
     try{
-      const result=await requestOpenRouter({question,history,mode,system:SYSTEM,signal:controller.signal});
-      return NextResponse.json(result,{headers:{'Cache-Control':'no-store'}});
+      const result=await requestOpenRouter({question,history,mode,system:styledSystem,signal:controller.signal});
+      return NextResponse.json(styleAnswerResponse(result,answerStyle),{headers:{'Cache-Control':'no-store'}});
     }catch(e){
       console.error('OpenRouter request failed',e?.status||'network-error',e?.name||'Error');
       return NextResponse.json({error:e?.name==='AbortError'?'OpenRouter research timed out. Please retry.':(e?.message||'OpenRouter unavailable.')},{status:e?.status||504});
@@ -55,15 +58,15 @@ export async function POST(req){
     if(!process.env.OPENAI_API_KEY)return NextResponse.json({error:'OpenAI setup is pending. Add OPENAI_API_KEY to Vercel environment variables.'},{status:503});
     const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
     try{
-      const result=await requestOpenAI({question,history,mode,system:SYSTEM,signal:controller.signal});
-      return NextResponse.json(result,{headers:{'Cache-Control':'no-store'}});
+      const result=await requestOpenAI({question,history,mode,system:styledSystem,signal:controller.signal});
+      return NextResponse.json(styleAnswerResponse(result,answerStyle),{headers:{'Cache-Control':'no-store'}});
     }catch(e){
       console.error('OpenAI request failed',e?.status||'network-error',e?.name||'Error');
       return NextResponse.json({error:e?.name==='AbortError'?'OpenAI research timed out. Please retry.':(e?.message||'AI service unavailable.')},{status:e?.status||504});
     }finally{clearTimeout(timer)}
   }
   if(!process.env.GEMINI_API_KEY)return NextResponse.json({error:'AI setup is pending. Set OPENROUTER_API_KEY, OPENAI_API_KEY or GEMINI_API_KEY in Vercel environment variables.'},{status:503});
-  const payload={systemInstruction:{parts:[{text:SYSTEM+(mode==='reflect'?'\nNo browsing is available for this answer; do not claim that current facts were verified.':'\nResearch mode is active: search when current reliable information materially improves the answer. For major factual claims show available source links. If sources are missing, say so.')}]},contents,generationConfig:{temperature:0.65,maxOutputTokens:4096},...(mode==='research'?{tools:[{google_search:{}}]}:{})};
+  const payload={systemInstruction:{parts:[{text:styledSystem+(mode==='reflect'?'\nNo browsing is available for this answer; do not claim that current facts were verified.':'\nResearch mode is active: search when current reliable information materially improves the answer. For major factual claims show available source links. If sources are missing, say so.')}]},contents,generationConfig:{temperature:0.65,maxOutputTokens:4096},...(mode==='research'?{tools:[{google_search:{}}]}:{})};
   const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
   try {
     // Some newer Gemini API projects no longer have access to 2.5 models.
@@ -104,7 +107,7 @@ export async function POST(req){
     const g=c.groundingMetadata||{};
     const sources=(g.groundingChunks||[]).filter(x=>/^https:\/\//i.test(x?.web?.uri||'')).map(x=>({title:String(x.web.title||'Source').slice(0,150),url:x.web.uri})).filter((x,i,a)=>a.findIndex(v=>v.url===x.url)===i).slice(0,10);
     const searchQueries=(g.webSearchQueries||[]).filter(x=>typeof x==='string').slice(0,8);
-    return NextResponse.json({answer,mode,searched:mode==='research'&&(sources.length>0||searchQueries.length>0),sources,searchQueries},{headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json(styleAnswerResponse({answer,mode,searched:mode==='research'&&(sources.length>0||searchQueries.length>0),sources,searchQueries},answerStyle),{headers:{'Cache-Control':'no-store'}});
   } catch(e){console.error('AI fetch',e?.name);return NextResponse.json({error:e?.name==='AbortError'?'Research timed out. Try a shorter question.':'Could not reach the AI service. Retry later.'},{status:504})}
   finally{clearTimeout(timer)}
 }

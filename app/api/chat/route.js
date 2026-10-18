@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requestOpenAI } from './openai.mjs';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
@@ -32,7 +33,22 @@ export async function POST(req){
   const history=Array.isArray(body.history)?body.history.slice(-14):[];
   const contents=history.filter(x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'&&x.content.length<=12000).map(x=>({role:x.role==='assistant'?'model':'user',parts:[{text:x.content}]}));
   contents.push({role:'user',parts:[{text:question}]});
-  if(!process.env.GEMINI_API_KEY)return NextResponse.json({error:'AI setup is pending. Site owner: set GEMINI_API_KEY in Vercel environment variables.'},{status:503});
+  // OpenAI takes precedence whenever its key is configured, unless Gemini is explicitly selected.
+  // This allows switching providers from Vercel without exposing keys or changing the frontend.
+  const provider = (process.env.AI_PROVIDER || '').toLowerCase();
+  const useOpenAI = provider === 'openai' || (provider !== 'gemini' && !!process.env.OPENAI_API_KEY);
+  if(useOpenAI){
+    if(!process.env.OPENAI_API_KEY)return NextResponse.json({error:'OpenAI setup is pending. Add OPENAI_API_KEY to Vercel environment variables.'},{status:503});
+    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
+    try{
+      const result=await requestOpenAI({question,history,mode,system:SYSTEM,signal:controller.signal});
+      return NextResponse.json(result,{headers:{'Cache-Control':'no-store'}});
+    }catch(e){
+      console.error('OpenAI request failed',e?.status||'network-error',e?.name||'Error');
+      return NextResponse.json({error:e?.name==='AbortError'?'OpenAI research timed out. Please retry.':(e?.message||'AI service unavailable.')},{status:e?.status||504});
+    }finally{clearTimeout(timer)}
+  }
+  if(!process.env.GEMINI_API_KEY)return NextResponse.json({error:'AI setup is pending. Set OPENAI_API_KEY or GEMINI_API_KEY in Vercel environment variables.'},{status:503});
   const payload={systemInstruction:{parts:[{text:SYSTEM+(mode==='reflect'?'\nNo browsing is available for this answer; do not claim that current facts were verified.':'\nResearch mode is active: search when current reliable information materially improves the answer. For major factual claims show available source links. If sources are missing, say so.')}]},contents,generationConfig:{temperature:0.65,maxOutputTokens:4096},...(mode==='research'?{tools:[{google_search:{}}]}:{})};
   const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
   try {

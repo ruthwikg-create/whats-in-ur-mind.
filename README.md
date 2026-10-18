@@ -13,6 +13,16 @@ The chat composer includes an answer-style picker. Each choice works independent
 
 Answers avoid long dash punctuation and use paragraphs, headings, meaningful comparisons and authentic sources where supplied by the connected AI provider. The app retains English, Telugu, Hindi, Tenglish, and Hinglish handling.
 
+## Research paper citations
+
+**Research & papers** is a dedicated category in the sidebar. In Live Research mode, scientific, medical and scholarly questions may trigger a real-time scholarly bibliography lookup using the public **OpenAlex** search API (https://openalex.org) and **Crossref** (https://www.crossref.org). No extra secret is needed for light use; an optional `OPENALEX_API_KEY` can be added in Vercel for higher usage limits.
+
+The assistant receives verified bibliographic records and any available abstract excerpts. It is instructed to cite relevant papers with source tags `[P1]`, `[P2]`, etc. Only tags that match actual retrieved paper records become clickable DOI links. The UI shows authors, year, journal, DOI and whether an abstract was available.
+
+Paper cards honestly distinguish **Cited in answer** from **Related reading**. Retrieving a paper title or abstract does not mean the full article was read, does not establish peer review, and does not verify every claim. Metadata services can fail, may have missing abstracts or incorrect indexing, and should never be treated as a substitute for examining the original paper. When scholarly retrieval is unavailable the app continues with ordinary live research and does not manufacture paper citations.
+
+To test, select **Live research**, choose **Research & papers** in the sidebar, and ask a question such as "Explain clinical evidence for wearable ECG arrhythmia detection and cite research papers." Verify the links lead to actual DOI pages.
+
 ## Features
 - English, Telugu, Hindi, Tenglish, Hinglish and other languages
 - Research-backed Gemini answers with Google Search grounding and real source links when available

@@ -6,10 +6,10 @@
 
 The chat composer includes an answer-style picker. Each choice works independently of Live Research vs Thoughtful Chat, and persists on the visitor's device.
 
-- **Detailed** (default): article-style explanation with clear headings, context, examples, evidence, and practical takeaways.
-- **Professional**: formal, evidence-focused analytical style for careers, research or workplace decisions.
-- **Easy Way**: simple explanations with clear definitions and everyday examples.
-- **Main Points**: short summary with numbered key points and a practical takeaway.
+- **Deep Dive** (default): article-style explanation with clear headings, context, examples, evidence, and practical takeaways.
+- **Expert Analysis**: formal, evidence-focused analytical style for careers, research or workplace decisions.
+- **Simply Put**: simple explanations with clear definitions and everyday examples.
+- **Key Insights**: short summary with numbered key points and a practical takeaway.
 
 Answers avoid long dash punctuation and use paragraphs, headings, meaningful comparisons and authentic sources where supplied by the connected AI provider. The app retains English, Telugu, Hindi, Tenglish, and Hinglish handling.
 

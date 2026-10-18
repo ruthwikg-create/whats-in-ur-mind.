@@ -55,3 +55,43 @@
   .answer-style-label{font-size:9px;padding:2px 6px}
   .meta-actions{flex-wrap:wrap;gap:7px}
 }
+
+
+/* Academic reference cards, accessible citations and source provenance */
+.academic-sources{margin-top:26px;border:1px solid var(--line);border-radius:18px;background:var(--card);padding:18px}
+.academic-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.academic-title{display:flex;align-items:flex-start;gap:11px;color:var(--brand)}
+.academic-title>svg{flex-shrink:0;margin-top:2px}
+.academic-title>div{display:flex;flex-direction:column;gap:4px}
+.academic-title strong{font-family:Manrope,sans-serif;font-size:14px;letter-spacing:-.2px;color:var(--ink)}
+.academic-title small{font-size:10.5px;line-height:1.5;color:var(--muted)}
+.academic-count{display:inline-flex;flex-shrink:0;white-space:nowrap;border-radius:99px;background:var(--hover);padding:6px 10px;font-size:10px;font-weight:800;color:var(--brand)}
+.academic-note{color:var(--muted);font-size:11px;line-height:1.65;margin:13px 0 18px}
+.academic-list{display:flex;flex-direction:column;gap:11px}
+.academic-paper{border-radius:14px;border:1px solid var(--line);background:var(--background);padding:16px 16px 13px;transition:border-color .18s,transform .18s}
+.academic-paper:hover{border-color:#94b5a1;transform:translateY(-1px)}
+.paper-top{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}
+.paper-number{background:var(--hover);color:var(--brand);padding:4px 7px;border-radius:6px;font-size:10px;font-weight:800}
+.paper-status,.paper-abstract{font-size:10px;font-weight:700;padding:4px 8px;border-radius:30px}
+.paper-status.used{background:#e4f1e5;color:#336b49}
+.paper-status.related{background:var(--hover);color:var(--muted)}
+.paper-abstract{background:#e9edf9;color:#526a9b}
+.dark .paper-status.used{background:#304d37;color:#b6ddbe}
+.dark .paper-abstract{background:#323f58;color:#b6cffa}
+.paper-title{display:inline-flex;align-items:baseline;gap:7px;color:var(--ink);font:800 13.2px/1.6 Manrope,sans-serif;text-decoration:none;overflow-wrap:anywhere}
+.paper-title:hover{text-decoration:underline;text-underline-offset:3px;color:var(--brand)}
+.paper-title svg{flex-shrink:0}
+.paper-authors{color:var(--muted);font-size:11px;line-height:1.5;margin:7px 0 8px}
+.paper-details{display:flex;flex-wrap:wrap;gap:6px 13px;color:var(--muted);font-size:10.5px;line-height:1.5;overflow-wrap:anywhere}
+.paper-details span:last-child{overflow-wrap:anywhere}
+.paper-bottom{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);margin-top:12px;padding-top:11px;font-size:10px;color:var(--muted)}
+.paper-bottom a{display:inline-flex;align-items:center;gap:4px;text-decoration:none;color:var(--brand);font-weight:800}
+.paper-bottom a:hover{text-decoration:underline}
+@media(max-width:540px){
+ .academic-sources{padding:13px;margin-top:20px}
+ .academic-title strong{font-size:13px}
+ .academic-title small{font-size:10px}
+ .academic-paper{padding:12px 11px}
+ .paper-title{font-size:12px}
+ .academic-count{font-size:9px;padding:5px 8px}
+}

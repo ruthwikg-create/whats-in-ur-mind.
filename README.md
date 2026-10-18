@@ -2,6 +2,17 @@
 
 **Built by Ruthwik.** An independently hosted multilingual AI thought partner for career decisions, life questions and exploring new ideas.
 
+## Answer styles
+
+The chat composer includes an answer-style picker. Each choice works independently of Live Research vs Thoughtful Chat, and persists on the visitor's device.
+
+- **Detailed** (default): article-style explanation with clear headings, context, examples, evidence, and practical takeaways.
+- **Professional**: formal, evidence-focused analytical style for careers, research or workplace decisions.
+- **Easy Way**: simple explanations with clear definitions and everyday examples.
+- **Main Points**: short summary with numbered key points and a practical takeaway.
+
+Answers avoid long dash punctuation and use paragraphs, headings, meaningful comparisons and authentic sources where supplied by the connected AI provider. The app retains English, Telugu, Hindi, Tenglish, and Hinglish handling.
+
 ## Features
 - English, Telugu, Hindi, Tenglish, Hinglish and other languages
 - Research-backed Gemini answers with Google Search grounding and real source links when available

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requestOpenAI } from './openai.mjs';
+import { requestOpenRouter } from './openrouter.mjs';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
@@ -36,6 +37,19 @@ export async function POST(req){
   // OpenAI takes precedence whenever its key is configured, unless Gemini is explicitly selected.
   // This allows switching providers from Vercel without exposing keys or changing the frontend.
   const provider = (process.env.AI_PROVIDER || '').toLowerCase();
+  // OpenRouter takes priority when explicitly selected or when no provider is selected and its key is available.
+  const useOpenRouter = provider === 'openrouter' || (!provider && !!process.env.OPENROUTER_API_KEY);
+  if(useOpenRouter){
+    if(!process.env.OPENROUTER_API_KEY)return NextResponse.json({error:'OpenRouter setup pending. Set OPENROUTER_API_KEY in Vercel.'},{status:503});
+    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
+    try{
+      const result=await requestOpenRouter({question,history,mode,system:SYSTEM,signal:controller.signal});
+      return NextResponse.json(result,{headers:{'Cache-Control':'no-store'}});
+    }catch(e){
+      console.error('OpenRouter request failed',e?.status||'network-error',e?.name||'Error');
+      return NextResponse.json({error:e?.name==='AbortError'?'OpenRouter research timed out. Please retry.':(e?.message||'OpenRouter unavailable.')},{status:e?.status||504});
+    }finally{clearTimeout(timer)}
+  }
   const useOpenAI = provider === 'openai' || (provider !== 'gemini' && !!process.env.OPENAI_API_KEY);
   if(useOpenAI){
     if(!process.env.OPENAI_API_KEY)return NextResponse.json({error:'OpenAI setup is pending. Add OPENAI_API_KEY to Vercel environment variables.'},{status:503});
@@ -48,7 +62,7 @@ export async function POST(req){
       return NextResponse.json({error:e?.name==='AbortError'?'OpenAI research timed out. Please retry.':(e?.message||'AI service unavailable.')},{status:e?.status||504});
     }finally{clearTimeout(timer)}
   }
-  if(!process.env.GEMINI_API_KEY)return NextResponse.json({error:'AI setup is pending. Set OPENAI_API_KEY or GEMINI_API_KEY in Vercel environment variables.'},{status:503});
+  if(!process.env.GEMINI_API_KEY)return NextResponse.json({error:'AI setup is pending. Set OPENROUTER_API_KEY, OPENAI_API_KEY or GEMINI_API_KEY in Vercel environment variables.'},{status:503});
   const payload={systemInstruction:{parts:[{text:SYSTEM+(mode==='reflect'?'\nNo browsing is available for this answer; do not claim that current facts were verified.':'\nResearch mode is active: search when current reliable information materially improves the answer. For major factual claims show available source links. If sources are missing, say so.')}]},contents,generationConfig:{temperature:0.65,maxOutputTokens:4096},...(mode==='research'?{tools:[{google_search:{}}]}:{})};
   const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
   try {

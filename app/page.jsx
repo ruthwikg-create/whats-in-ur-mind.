@@ -2,7 +2,7 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {Sparkles,BrainCircuit,Menu,X,Plus,BriefcaseBusiness,Lightbulb,BookOpen,Code2,Heart,Globe2,Mic,ArrowUp,MessageCircle,Moon,Sun,Trash2,ExternalLink,Download,Copy,Check,Info,ChevronDown,Compass,ShieldCheck} from 'lucide-react';
+import {Sparkles,BrainCircuit,Menu,X,Plus,BriefcaseBusiness,Lightbulb,BookOpen,Code2,Heart,Globe2,Mic,ArrowUp,MessageCircle,Moon,Sun,Trash2,ExternalLink,Download,Copy,Check,Info,ChevronDown,Compass,ShieldCheck,Microscope,BookMarked} from 'lucide-react';
 
 const STORE='whats-in-ur-mind-v1';
 const ANSWER_STYLES=[{id:'detailed',label:'Detailed'},{id:'professional',label:'Professional'},{id:'easy',label:'Easy Way'},{id:'points',label:'Main Points'}];
@@ -12,7 +12,8 @@ const categories=[
 {id:'ideas',label:'Ideas & business',Icon:Lightbulb},
 {id:'learning',label:'Study & learning',Icon:BookOpen},
 {id:'technology',label:'Technology',Icon:Code2},
-{id:'life',label:'Life decisions',Icon:Heart}];
+{id:'life',label:'Life decisions',Icon:Heart},
+{id:'research',label:'Research & papers',Icon:Microscope}];
 const starters=[
 {title:'Find your direction',description:'Unsure what comes next? Explore your paths.',icon:Compass,tone:'peach',category:'career',prompt:'I am confused about my future career. Research practical career paths, job prospects and skills, and help me create a realistic plan.'},
 {title:'Explore an idea',description:'Turn that "what if" into a practical plan.',icon:Lightbulb,tone:'mint',category:'ideas',prompt:'I have a new startup idea. Help me evaluate demand, alternatives, competitors, risks and a low-cost way to validate it.'},
@@ -22,6 +23,23 @@ const starters=[
 const uid=()=>globalThis.crypto?.randomUUID?.()||Math.random().toString(36).slice(2)+Date.now().toString(36);
 function readStored(){try{let a=JSON.parse(localStorage.getItem(STORE)||'[]');return Array.isArray(a)?a.filter(x=>x&&typeof x.id==='string'&&Array.isArray(x.messages)).slice(0,80):[]}catch{return []}}
 function Brand(){return <div className="brand"><span className="mark"><BrainCircuit size={25}/></span><div><span>what's in</span><b>U'R mind<i>.</i></b></div></div>}
+function AcademicPapers({papers}){
+ if(!Array.isArray(papers)||!papers.length)return null;
+ const cited=papers.filter(p=>p.citedInAnswer).length;
+ return <section className="academic-sources" aria-label="Academic research papers">
+   <div className="academic-header"><div className="academic-title"><BookMarked size={17}/><div><strong>Research papers</strong><small>{cited?cited+' cited in answer. ':''}Verified bibliographic links from OpenAlex or Crossref.</small></div></div><span className="academic-count">{papers.length} papers</span></div>
+   <p className="academic-note">Only cited papers are used as evidence in this answer. Other papers are related reading. A paper's title and abstract are not the same as reviewing its full text.</p>
+   <div className="academic-list">
+   {papers.map(p=><article className="academic-paper" key={p.id+'-'+p.url}>
+     <div className="paper-top"><span className="paper-number">{p.id}</span><span className={'paper-status '+(p.citedInAnswer?'used':'related')}>{p.citedInAnswer?'Cited in answer':'Related reading'}</span>{p.hasAbstract&&<span className="paper-abstract">Abstract available</span>}</div>
+     <a className="paper-title" href={p.url} target="_blank" rel="noopener noreferrer nofollow">{p.title}<ExternalLink size={13}/></a>
+     <p className="paper-authors">{(p.authors||[]).slice(0,4).join(', ')}{(p.authors||[]).length===4?' et al.':''}</p>
+     <div className="paper-details"><span>{p.journal||'Publication record'}</span>{p.year&&<span>{p.year}</span>}{p.doi&&<span>DOI: {p.doi}</span>}</div>
+     <div className="paper-bottom"><span>{p.database}</span><a href={p.url} target="_blank" rel="noopener noreferrer nofollow">View publication <ExternalLink size={12}/></a></div>
+   </article>)}
+   </div>
+ </section>;
+}
 function ChatMessage({m,copy}){
   const mine=m.role==='user';
   return <article className={'message '+(mine?'mine':'theirs')}>
@@ -30,7 +48,7 @@ function ChatMessage({m,copy}){
       <div className="markdown"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{a:({node,...props})=><a {...props} target="_blank" rel="noopener noreferrer nofollow"/>}}>{m.content||''}</ReactMarkdown></div>
       {!mine&&<><div className="meta-actions"><span className={'truth '+(m.searched?'searched':'')}><span className="truthdot"/>{m.mode==='reflect'?'No live research requested':m.searched?'Live research used':'No live sources retrieved'}</span><span className="answer-style-label">{ANSWER_STYLES.find(s=>s.id===m.answerStyle)?.label||'Detailed'}</span><button type="button" onClick={()=>copy(m.content)}><Copy size={13}/> Copy</button></div>
       {m.sources?.length>0&&<div className="source-group"><b><Globe2 size={14}/> SOURCES USED <span>{m.sources.length}</span></b><div className="sources">{m.sources.map((s,i)=><a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer nofollow"><small>{i+1}</small><span>{s.title||'Source'}</span><ExternalLink size={13}/></a>)}</div></div>}
-      {m.searchQueries?.length>0&&<details className="query-details"><summary>Research searches <ChevronDown size={13}/></summary><div>{m.searchQueries.map((q,i)=><span key={i}>{q}</span>)}</div></details>}
+      {m.papers?.length>0&&<AcademicPapers papers={m.papers}/>} {m.searchQueries?.length>0&&<details className="query-details"><summary>Research searches <ChevronDown size={13}/></summary><div>{m.searchQueries.map((q,i)=><span key={i}>{q}</span>)}</div></details>}
       </>}
     </div>
   </article>
@@ -61,10 +79,10 @@ export default function Home(){
    setChats(list=>[fresh,...list.filter(c=>c.id!==id)]);chatsRef.current=[fresh,...chatsRef.current.filter(c=>c.id!==id)];
    setSelected(id);selRef.current=id;setText('');setError('');setNav(false);setBusy(true);busyRef.current=true;
    try{
-     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:question,mode,answerStyle,history})});
+     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:question,mode,answerStyle,category:prior?.category||cat||category,history})});
      const data=await res.json().catch(()=>({}));
      if(!res.ok||data.error)throw Error(data.error||'AI is temporarily unavailable.');
-     const reply={id:uid(),role:'assistant',content:data.answer,mode:data.mode||mode,answerStyle:data.answerStyle||answerStyle,searched:!!data.searched,sources:data.sources||[],searchQueries:data.searchQueries||[]};
+     const reply={id:uid(),role:'assistant',content:data.answer,mode:data.mode||mode,answerStyle:data.answerStyle||answerStyle,searched:!!data.searched,sources:data.sources||[],papers:data.papers||[],searchQueries:data.searchQueries||[]};
      setChats(list=>list.map(c=>c.id===id?{...c,messages:[...c.messages,reply],updated:Date.now()}:c).sort((a,b)=>b.updated-a.updated));
    }catch(e){setError(e.message||'Could not answer. Try again.');setText(question)}
    finally{setBusy(false);busyRef.current=false}
@@ -92,6 +110,6 @@ export default function Home(){
      </div>
    </main>
    {copied&&<div className="toast"><Check size={15}/> Copied</div>}
-   {about&&<div className="modalback" onClick={()=>setAbout(false)}><div className="modal" onClick={e=>e.stopPropagation()} role="dialog" aria-modal="true"><button className="modalclose" onClick={()=>setAbout(false)}><X size={19}/></button><div className="modallogo"><Sparkles size={22}/></div><h2>An open space for every mind.</h2><p>What's in U'R mind understands questions about careers, ideas, life, business and learning in the language you naturally speak — including Telugu, Hindi, English, Tenglish and Hinglish.</p><div className="modalrow"><Globe2 size={17}/><div><b>Research when it matters</b><small>In Live research mode the connected AI provider can consult current search results and share genuine source links when available.</small></div></div><div className="modalrow"><ShieldCheck size={17}/><div><b>Your browser, your history</b><small>Chats are saved on this device. Questions are sent to the AI provider to answer them. Don't share sensitive information.</small></div></div><div className="modalrow"><BookOpen size={17}/><div><b>Four answer styles</b><small>Detailed for article-style explanations, Professional for formal analysis, Easy Way for simple examples, and Main Points for a concise summary.</small></div></div><p className="modalcredit">Designed & built by <b>Ruthwik</b></p></div></div>}
+   {about&&<div className="modalback" onClick={()=>setAbout(false)}><div className="modal" onClick={e=>e.stopPropagation()} role="dialog" aria-modal="true"><button className="modalclose" onClick={()=>setAbout(false)}><X size={19}/></button><div className="modallogo"><Sparkles size={22}/></div><h2>An open space for every mind.</h2><p>What's in U'R mind understands questions about careers, ideas, life, business and learning in the language you naturally speak — including Telugu, Hindi, English, Tenglish and Hinglish.</p><div className="modalrow"><Globe2 size={17}/><div><b>Research when it matters</b><small>Live research uses the selected provider's web search. For academic questions, OpenAlex and Crossref can supply authentic research paper titles, abstracts when available, and clickable DOI links. Cited papers are distinguished from related reading.</small></div></div><div className="modalrow"><ShieldCheck size={17}/><div><b>Your browser, your history</b><small>Chats are saved on this device. Questions are sent to the AI provider to answer them. Don't share sensitive information.</small></div></div><div className="modalrow"><BookOpen size={17}/><div><b>Four answer styles</b><small>Detailed for article-style explanations, Professional for formal analysis, Easy Way for simple examples, and Main Points for a concise summary.</small></div></div><p className="modalcredit">Designed & built by <b>Ruthwik</b></p></div></div>}
  </div>;
 }

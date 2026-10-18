@@ -165,3 +165,65 @@
 }
 @media(max-width:380px){.style-picker select{max-width:92px}.composerbottom{gap:6px}.tools{gap:5px}.mode{font-size:10px;padding:8px 7px}.style-picker{padding:8px 7px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Mobile-first research controls: always expose Live Research and all four answer styles. */
+.composerbottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:nowrap}
+.research-controls{display:flex;align-items:center;gap:9px;min-width:0;flex:1}
+.research-controls>.mode{display:flex;align-items:center;justify-content:center;flex:0 1 auto;min-width:0;min-height:42px;gap:8px;padding:0 13px;white-space:nowrap}
+.mode-label{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.research-controls>.style-picker{display:flex;align-items:center;flex:0 1 245px;min-width:0;min-height:42px;padding:0 12px;gap:8px;white-space:nowrap}
+.style-caption{font-size:11px;color:var(--muted);font-weight:500}
+.research-controls>.style-picker select{display:block;min-width:0;width:100%;max-width:none;font-size:12px;line-height:1.3;color:var(--ink);text-overflow:ellipsis}
+.research-controls>.style-picker .picker-chevron{flex-shrink:0;color:var(--muted);pointer-events:none}
+.composer-actions{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-shrink:0}
+.composer-actions .voice{min-height:42px;padding:0 5px}
+.composer-actions .sendgroup{display:flex;align-items:center;gap:10px;margin-left:0}
+.composer-actions .send{width:42px;height:42px;flex-shrink:0}
+.research-controls>.mode:focus-visible,.composer-actions .voice:focus-visible,.composer-actions .send:focus-visible{outline:2px solid #76aa89;outline-offset:2px}
+@media(max-width:720px){
+ .workspace{min-height:0}
+ .welcome{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain;width:100%;margin:0 0 12px;padding:22px 1px 12px}
+ .inputarea{width:100%;margin-top:auto;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+ .composer{padding:12px}
+ .composer textarea{display:block;min-height:46px;max-height:120px;font-size:16px}
+ .composerbottom{flex-direction:column;align-items:stretch;gap:7px}
+ .research-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;flex:none;width:100%}
+ .research-controls>.mode,.research-controls>.style-picker{height:44px;min-height:44px;min-width:0;width:100%;flex:none;justify-content:flex-start;padding:0 10px;font-size:12px;gap:7px}
+ .research-controls>.mode svg,.research-controls>.style-picker>svg:first-child{flex-shrink:0}
+ .research-controls>.style-picker select{font-size:12px;min-width:0}
+ .style-caption{display:none}
+ .composer-actions{height:44px;justify-content:space-between;gap:8px;width:100%}
+ .composer-actions .voice{min-height:44px;gap:7px;padding:0 8px}
+ .composer-actions .voice span{display:inline;font-size:12px}
+ .composer-actions .sendgroup{margin-left:auto;gap:9px}
+ .composer-actions .send{width:44px;height:44px}
+ .credit{font-size:9px;line-height:1.4;margin:7px 0 0}
+ .chat{min-height:0;overscroll-behavior:contain}
+ .chathead>button{min-width:44px;min-height:42px;justify-content:center}
+ .sources>a{min-height:44px}
+ .paper-bottom{flex-wrap:wrap}
+ .paper-bottom a{min-height:35px;align-items:center}
+}
+@media(max-width:420px){
+ .headerleft>span{letter-spacing:.65px;max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+ .headerleft,.headeractions{gap:8px}
+ .aboutbtn{padding:0 8px}
+ .research-controls>.mode,.research-controls>.style-picker{padding:0 8px;gap:6px}
+ .research-controls>.mode{font-size:11.5px}
+ .research-controls>.style-picker select{font-size:11.5px}
+ .research-controls>.style-picker .picker-chevron{width:12px}
+ .composer-actions .voice span{display:inline}
+}
+@media(max-width:350px){
+ .research-controls>.mode,.research-controls>.style-picker{gap:4px;padding:0 7px}
+ .research-controls>.mode svg,.research-controls>.style-picker>svg:first-child{width:14px;height:14px}
+ .research-controls>.mode{font-size:11px}
+ .research-controls>.style-picker select{font-size:11px}
+ .char-count{display:none}
+ .headerleft>span{max-width:98px}
+}
+@media(max-width:720px) and (max-height:650px){
+ .welcome{padding-top:9px}
+ .welcome .eyebrow{margin-bottom:10px}
+ .welcome .languages{margin-bottom:12px}
+}

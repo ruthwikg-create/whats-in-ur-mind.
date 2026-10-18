@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requestOpenAI } from './openai.mjs';
 import { requestOpenRouter } from './openrouter.mjs';
 import { normalizeAnswerStyle, getAnswerStylePrompt, styleAnswerResponse } from './answer-style.mjs';
+import { findResearchPapers, researchEvidenceContext, attachVerifiedPapers } from './scholarly.mjs';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
@@ -33,7 +34,11 @@ export async function POST(req){
   if(!question||question.length>6000)return NextResponse.json({error:'Please enter a question up to 6,000 characters.'},{status:400});
   const mode=body?.mode==='reflect'?'reflect':'research';
   const answerStyle=normalizeAnswerStyle(body?.answerStyle);
-  const styledSystem=SYSTEM+'\n\n'+getAnswerStylePrompt(answerStyle);
+  // Retrieve actual academic bibliography and available abstract excerpts only for research topics.
+  // Time-box lookup so academic APIs cannot block the live research chat.
+  const paperCategory=typeof body?.category==='string'?body.category:'';
+  const papers=mode==='research'?await findResearchPapers(question,{category:paperCategory,signal:AbortSignal.timeout(5500)}):[];
+  const styledSystem=SYSTEM+'\n\n'+getAnswerStylePrompt(answerStyle)+researchEvidenceContext(papers);
   const history=Array.isArray(body.history)?body.history.slice(-14):[];
   const contents=history.filter(x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'&&x.content.length<=12000).map(x=>({role:x.role==='assistant'?'model':'user',parts:[{text:x.content}]}));
   contents.push({role:'user',parts:[{text:question}]});
@@ -47,7 +52,7 @@ export async function POST(req){
     const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
     try{
       const result=await requestOpenRouter({question,history,mode,system:styledSystem,signal:controller.signal});
-      return NextResponse.json(styleAnswerResponse(result,answerStyle),{headers:{'Cache-Control':'no-store'}});
+      return NextResponse.json(styleAnswerResponse(attachVerifiedPapers(result,papers),answerStyle),{headers:{'Cache-Control':'no-store'}});
     }catch(e){
       console.error('OpenRouter request failed',e?.status||'network-error',e?.name||'Error');
       return NextResponse.json({error:e?.name==='AbortError'?'OpenRouter research timed out. Please retry.':(e?.message||'OpenRouter unavailable.')},{status:e?.status||504});
@@ -59,7 +64,7 @@ export async function POST(req){
     const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
     try{
       const result=await requestOpenAI({question,history,mode,system:styledSystem,signal:controller.signal});
-      return NextResponse.json(styleAnswerResponse(result,answerStyle),{headers:{'Cache-Control':'no-store'}});
+      return NextResponse.json(styleAnswerResponse(attachVerifiedPapers(result,papers),answerStyle),{headers:{'Cache-Control':'no-store'}});
     }catch(e){
       console.error('OpenAI request failed',e?.status||'network-error',e?.name||'Error');
       return NextResponse.json({error:e?.name==='AbortError'?'OpenAI research timed out. Please retry.':(e?.message||'AI service unavailable.')},{status:e?.status||504});
@@ -107,7 +112,7 @@ export async function POST(req){
     const g=c.groundingMetadata||{};
     const sources=(g.groundingChunks||[]).filter(x=>/^https:\/\//i.test(x?.web?.uri||'')).map(x=>({title:String(x.web.title||'Source').slice(0,150),url:x.web.uri})).filter((x,i,a)=>a.findIndex(v=>v.url===x.url)===i).slice(0,10);
     const searchQueries=(g.webSearchQueries||[]).filter(x=>typeof x==='string').slice(0,8);
-    return NextResponse.json(styleAnswerResponse({answer,mode,searched:mode==='research'&&(sources.length>0||searchQueries.length>0),sources,searchQueries},answerStyle),{headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json(styleAnswerResponse(attachVerifiedPapers({answer,mode,searched:mode==='research'&&(sources.length>0||searchQueries.length>0),sources,searchQueries},papers),answerStyle),{headers:{'Cache-Control':'no-store'}});
   } catch(e){console.error('AI fetch',e?.name);return NextResponse.json({error:e?.name==='AbortError'?'Research timed out. Try a shorter question.':'Could not reach the AI service. Retry later.'},{status:504})}
   finally{clearTimeout(timer)}
 }

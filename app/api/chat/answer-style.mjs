@@ -2,7 +2,7 @@
 // The client sends a style id only. All authoritative instructions stay server-side.
 export const ANSWER_STYLES = Object.freeze({
   detailed: {
-    label: 'Detailed',
+    label: 'Deep Dive',
     guidance: [
       'Use a high-quality encyclopedia-style explanation with approachable human wording, similar to the clarity of a well-edited Wikipedia overview.',
       'For substantial informational questions, start with a direct overview paragraph, then use meaningful Markdown headings (## and ###) to cover background, how or why it works, major aspects and practical implications.',
@@ -13,7 +13,7 @@ export const ANSWER_STYLES = Object.freeze({
     ].join(' ')
   },
   professional: {
-    label: 'Professional',
+    label: 'Expert Analysis',
     guidance: [
       'Write in a formal, precise, well-organized professional voice suitable for an academic report, professional briefing or career consultation.',
       'Lead with a clear executive overview, then use Markdown headings for evidence, detailed analysis, considerations, limitations, and recommendations as relevant.',
@@ -22,7 +22,7 @@ export const ANSWER_STYLES = Object.freeze({
     ].join(' ')
   },
   easy: {
-    label: 'Easy Way',
+    label: 'Simply Put',
     guidance: [
       'Explain the answer in friendly, natural, very easy language without losing essential facts.',
       'Start with a simple direct explanation, define new words in everyday language, and build understanding in small logical steps.',
@@ -32,7 +32,7 @@ export const ANSWER_STYLES = Object.freeze({
     ].join(' ')
   },
   points: {
-    label: 'Main Points',
+    label: 'Key Insights',
     guidance: [
       'Give a quick but meaningful summary of the most important information.',
       'Start with a brief one- or two-sentence answer, followed by 4 to 8 numbered key points with one or two explanatory sentences each if the topic warrants it.',

@@ -95,3 +95,73 @@
  .paper-title{font-size:12px}
  .academic-count{font-size:9px;padding:5px 8px}
 }
+
+
+/* Research workspace redesign: restrained palette, quiet surfaces, fluid responsive layout */
+.app{--background:#fbfcfb;--sidebar:#f7f9f7;--card:#ffffff;--ink:#182b24;--muted:#697c71;--line:#e3eae5;--brand:#215844;--hover:#eef3ef;grid-template-columns:258px minmax(0,1fr)}
+.app.dark{--background:#121b17;--sidebar:#17231d;--card:#1d2b23;--ink:#ecf4ed;--muted:#a5b7aa;--line:#34483b;--brand:#91c8a5;--hover:#273a2e}
+.sidebar{padding:24px 14px 17px}
+.sidebrand{margin-bottom:27px}
+.mark{width:38px;height:38px;border-radius:11px}
+.new{background:#255945;border-radius:11px;box-shadow:none;padding:13px}
+.grouphead{margin-top:29px;font-size:9px;letter-spacing:1.3px}
+.navlist{gap:2px}
+.navlist button{border-radius:9px;padding:10px 12px;font-size:12.5px}
+.history .grouphead{margin-top:26px}
+.footnote{background:transparent;border:1px solid var(--line);border-radius:12px;padding:13px}
+.dark .footnote{background:transparent}
+.header{height:65px;padding:0 clamp(18px,4vw,55px)}
+.headerleft>span{letter-spacing:1.5px}
+.workspace{padding:0 clamp(16px,3vw,30px)}
+.welcome,.inputarea,.chat{width:min(100%,780px)}
+.welcome{margin:auto 0 27px}
+.eyebrow{font-size:10px;letter-spacing:1.65px;color:var(--brand);margin-bottom:23px}
+.welcome h1{font-size:clamp(39px,5vw,60px);letter-spacing:-3.2px}
+.welcome h1 em{font-style:normal;font-family:Manrope,sans-serif;font-weight:800;letter-spacing:-3px}
+.sub{font-size:14px;line-height:1.85;margin-bottom:20px}
+.languages{margin-bottom:35px}
+.starters{gap:10px}
+.starter{min-height:148px;border-radius:12px;padding:17px 15px;box-shadow:none;transition:border-color .2s ease,transform .2s ease,background .2s ease}
+.starter:hover{transform:translateY(-2px);border-color:#92b4a0;box-shadow:none;background:var(--hover)}
+.startericon{width:30px;height:30px;border-radius:9px}
+.starter>b{font-size:12.5px}
+.starter small{font-size:10.5px}
+.composer{border:1px solid var(--line);border-radius:15px;padding:15px 15px 11px;box-shadow:0 5px 25px #1a382808}
+.dark .composer{box-shadow:none}
+.composer:focus-within{border-color:#84ac96;box-shadow:0 0 0 3px #7fae9018}
+.composer textarea{min-height:52px;font-size:14px}
+.mode,.style-picker{border-radius:9px;background:var(--background);border:1px solid var(--line);color:var(--ink);font-weight:600}
+.mode.reflect{background:var(--background);color:var(--ink);border-color:var(--line)}
+.send{border-radius:10px;background:#235b46}
+.send:hover{background:#174531}
+.credit{margin-top:12px;color:var(--muted)}
+.chathead{padding:17px 0 19px}
+.chatmark{width:35px;height:35px;border-radius:9px}
+.messages{gap:32px}
+.msgavatar{border-radius:9px}
+.mine .msgmain{border-radius:13px 4px 13px 13px}
+.theirs .markdown{line-height:1.83}
+.theirs .markdown h2{font-size:17px;font-weight:750}
+.academic-sources{border-radius:13px;background:transparent}
+.academic-paper{border-radius:10px;transform:none!important}
+.source-group .sources>a{border-radius:9px}
+@media(max-width:1150px){.welcome,.inputarea,.chat{max-width:740px}}
+@media(max-width:720px){
+ .app{display:block}
+ .sidebar{padding:23px 14px}
+ .header{height:58px;padding:0 17px}
+ .workspace{padding:0 14px}
+ .welcome{margin:auto 0 18px}
+ .welcome h1{font-size:clamp(32px,8.1vw,42px);letter-spacing:-2px}
+ .welcome h1 em{letter-spacing:-2px}
+ .sub{font-size:12px;line-height:1.7}
+ .languages{margin-bottom:19px}
+ .starter{min-height:119px;padding:12px}
+ .composer{padding:12px;border-radius:13px}
+ .composer textarea{font-size:13px}
+ .mode,.style-picker{border-radius:8px}
+ .chathead{padding:12px 0 15px}
+ .messages{gap:23px}
+}
+@media(max-width:380px){.style-picker select{max-width:92px}.composerbottom{gap:6px}.tools{gap:5px}.mode{font-size:10px;padding:8px 7px}.style-picker{padding:8px 7px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

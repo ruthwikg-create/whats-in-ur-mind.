@@ -10,6 +10,17 @@
 - Responsive mobile/desktop design, dark mode, voice dictation where supported
 - No Hatchable dependencies, permission wall or watermark
 
+## Use OpenRouter (mobile setup)
+
+The app now supports **OpenRouter, OpenAI and Gemini** without any hosting-platform dependencies. When `OPENROUTER_API_KEY` is configured and `AI_PROVIDER` is not set, OpenRouter takes priority. If multiple keys exist, choose explicitly with `AI_PROVIDER=openrouter`.
+
+In Vercel → Project → Settings → Environment Variables add:
+- `AI_PROVIDER` = `openrouter`
+- `OPENROUTER_API_KEY` = your secret from https://openrouter.ai/settings/keys
+- `OPENROUTER_MODEL` = `openrouter/auto` (optional; default). You can select another OpenRouter model slug instead.
+
+After saving variables, **redeploy the production deployment** to apply them. Never commit an API key or paste it into chat. The site uses the `openrouter:web_search` server tool in Live Research mode and disables that tool in Thoughtful Chat mode. Search has separate usage costs; `openrouter/auto` routes to variable-priced models and is not necessarily free. Sources are only marked researched when the provider confirms usage or returns citation data; answer text may also include citations.
+
 ## Vercel deployment
 Framework: Next.js. Root directory: `./`.
 Environment variables (configured only in Vercel, never committed):

@@ -37,7 +37,7 @@ export async function POST(req){
   // Retrieve actual academic bibliography and available abstract excerpts only for research topics.
   // Time-box lookup so academic APIs cannot block the live research chat.
   const paperCategory=typeof body?.category==='string'?body.category:'';
-  const papers=mode==='research'?await findResearchPapers(question,{category:paperCategory,signal:AbortSignal.timeout(5500)}):[];
+  const papers=mode==='research'?await findResearchPapers(question,{category:paperCategory,signal:AbortSignal.timeout(4500)}):[];
   const styledSystem=SYSTEM+'\n\n'+getAnswerStylePrompt(answerStyle)+researchEvidenceContext(papers);
   const history=Array.isArray(body.history)?body.history.slice(-14):[];
   const contents=history.filter(x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'&&x.content.length<=12000).map(x=>({role:x.role==='assistant'?'model':'user',parts:[{text:x.content}]}));
@@ -49,7 +49,7 @@ export async function POST(req){
   const useOpenRouter = provider === 'openrouter' || (!provider && !!process.env.OPENROUTER_API_KEY);
   if(useOpenRouter){
     if(!process.env.OPENROUTER_API_KEY)return NextResponse.json({error:'OpenRouter setup pending. Set OPENROUTER_API_KEY in Vercel.'},{status:503});
-    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
+    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),51000);
     try{
       const result=await requestOpenRouter({question,history,mode,system:styledSystem,signal:controller.signal});
       return NextResponse.json(styleAnswerResponse(attachVerifiedPapers(result,papers),answerStyle),{headers:{'Cache-Control':'no-store'}});
@@ -61,7 +61,7 @@ export async function POST(req){
   const useOpenAI = provider === 'openai' || (provider !== 'gemini' && !!process.env.OPENAI_API_KEY);
   if(useOpenAI){
     if(!process.env.OPENAI_API_KEY)return NextResponse.json({error:'OpenAI setup is pending. Add OPENAI_API_KEY to Vercel environment variables.'},{status:503});
-    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
+    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),51000);
     try{
       const result=await requestOpenAI({question,history,mode,system:styledSystem,signal:controller.signal});
       return NextResponse.json(styleAnswerResponse(attachVerifiedPapers(result,papers),answerStyle),{headers:{'Cache-Control':'no-store'}});
@@ -72,7 +72,7 @@ export async function POST(req){
   }
   if(!process.env.GEMINI_API_KEY)return NextResponse.json({error:'AI setup is pending. Set OPENROUTER_API_KEY, OPENAI_API_KEY or GEMINI_API_KEY in Vercel environment variables.'},{status:503});
   const payload={systemInstruction:{parts:[{text:styledSystem+(mode==='reflect'?'\nNo browsing is available for this answer; do not claim that current facts were verified.':'\nResearch mode is active: search when current reliable information materially improves the answer. For major factual claims show available source links. If sources are missing, say so.')}]},contents,generationConfig:{temperature:0.65,maxOutputTokens:4096},...(mode==='research'?{tools:[{google_search:{}}]}:{})};
-  const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),55000);
+  const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),51000);
   try {
     // Some newer Gemini API projects no longer have access to 2.5 models.
     // Only fall back on model-not-found errors; never silently retry auth, quota, or billing errors.
